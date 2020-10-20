@@ -37274,6 +37274,8 @@ module.exports = function(module) {
 
 __webpack_require__(/*! ./bootstrap */ "./resources/js/bootstrap.js");
 
+__webpack_require__(/*! ./upload */ "./resources/js/upload.js");
+
 /***/ }),
 
 /***/ "./resources/js/bootstrap.js":
@@ -37318,6 +37320,75 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 //     cluster: process.env.MIX_PUSHER_APP_CLUSTER,
 //     forceTLS: true
 // });
+
+/***/ }),
+
+/***/ "./resources/js/upload.js":
+/*!********************************!*\
+  !*** ./resources/js/upload.js ***!
+  \********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _require = __webpack_require__(/*! axios */ "./node_modules/axios/index.js"),
+    Axios = _require["default"];
+
+$('.fileAddBtn').on('click', function () {
+  var addTableRow = "<tr>" + "<td><input class='fileInput form-control' type='file'></td>" + "<td class='fileSize'>File Size</td>" + "<td><button class='fileCancelBtn btn btn-danger btn-sm'>Cancel</button></td>" + "<td><button class='fileUploadbtn btn btn-primary btn-sm'>Upload</button></td>" + " <td class='fileUpMb'>Uploaded(MB)</td>" + "<td class='filePercentage'>Uploaded(%)</td>" + "<td class='fileStatus'>Status</td>" + " </tr>"; //add new row when click fileAddBtn   
+
+  $('.fileList').append(addTableRow); //remove row
+
+  $('.fileCancelBtn').on('click', function () {
+    $(this).parents('tr').remove();
+  }); //calculate file size and show in the row
+
+  $('.fileInput').on('change', function () {
+    var myfile = $(this).prop('files');
+    var myfileSize = (myfile[0].size / (1024 * 1024)).toFixed(2);
+    $(this).closest('tr').find('.fileSize').html(myfileSize + "MB");
+  });
+  $('.fileUploadbtn').on('click', function (event) {
+    var myfile = $(this).closest('tr').find('.fileInput').prop('files');
+    var fileUpMb = $(this).closest('tr').find('.fileUpMb');
+    var filePercentage = $(this).closest('tr').find('.filePercentage');
+    var fileStatus = $(this).closest('tr').find('.fileStatus');
+    var Upbtn = $(this);
+    var fromData = new FormData();
+    fromData.append('fileKey', myfile[0]);
+    onFileUpload(fromData, fileUpMb, filePercentage, fileStatus, Upbtn);
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  });
+});
+
+function onFileUpload(fromData, fileUpMb, filePercentage, fileStatus, Upbtn) {
+  fileStatus.html('Uploading....');
+  Upbtn.prop('disabled', true);
+  var url = '/fileUp';
+  var config = {
+    headers: {
+      'content-type': 'multipart/form-data'
+    },
+    onUploadProgress: function onUploadProgress(progressEvent) {
+      var upMb = (progressEvent.loaded / (1024 * 1024)).toFixed(2) + " MB";
+      var upPer = (progressEvent.loaded * 100 / progressEvent.total).toFixed(2) + " %";
+      fileUpMb.html(upMb);
+      filePercentage.html(upPer);
+    }
+  };
+  axios.post(url, fromData, config).then(function (response) {
+    if (response.status == 200) {
+      fileStatus.html('Success');
+      Upbtn.prop('disabled', false);
+    } else {
+      fileStatus.html('fail');
+      Upbtn.prop('disabled', false);
+    }
+  })["catch"](function () {
+    fileStatus.html('fail');
+    Upbtn.prop('disabled', false);
+  });
+}
 
 /***/ }),
 
